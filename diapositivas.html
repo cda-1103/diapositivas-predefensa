@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <!-- Configuración básica del documento -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Defensa TEG - Claudio Dávila</title>
+    
+    <!-- Importación de fuentes tipográficas desde Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* =========================================
+           VARIABLES GLOBALES (Paleta de Colores)
+           ========================================= */
+        :root {
+            --bg-dark: #07090f;        
+            --bg-panel: #11141d;       
+            --primary: #29b6f6;        
+            --secondary: #ffca28;      
+            --accent: #ff5252;         
+            --text-main: #ffffff;      
+            --text-muted: #b0b8c4;     
+            --border: rgba(255, 255, 255, 0.15); 
+            --success: #66bb6a;        
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            overflow: hidden; 
+            height: 100vh;
+            width: 100vw;
+            cursor: none; 
+            display: flex;
+            justify-content: center; 
+            align-items: center;     
+        }
+
+        .background-fx {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at 50% 120%, #1a237e 0%, #07090f 70%);
+            z-index: -1; 
+        }
+
+        #cursor {
+            width: 18px; height: 18px; background: #ff3b30; border-radius: 50%;
+            position: absolute; pointer-events: none; z-index: 9999;
+            box-shadow: 0 0 15px #ff3b30; transition: transform 0.05s;
+        }
+
+        .slide-container {
+            width: 1280px; 
+            height: 720px; 
+            position: relative;
+            background: transparent;
+            overflow: hidden;
+        }
+
+        .slide {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            padding: 50px 70px; opacity: 0; visibility: hidden;
+            transform: scale(1.02); 
+            transition: all 0.5s cubic-bezier(0.2, 0.8, 0.2, 1); 
+            display: flex; flex-direction: column; justify-content: flex-start;
+        }
+
+        .slide.active { 
+            opacity: 1; 
+            visibility: visible; 
+            transform: scale(1); 
+            z-index: 10; 
+        }
+        
+        .slide-center { justify-content: center; align-items: center; text-align: center; }
+
+        /* =========================================
+           TIPOGRAFÍA Y TEXTOS
+           ========================================= */
+        h1 { 
+            font-size: 2.8rem; font-weight: 800; line-height: 1.25; margin: 15px 0;
+            max-width: 95%; margin-left: auto; margin-right: auto;
+            background: linear-gradient(180deg, #fff, #b0b0b0); 
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-transform: uppercase;
+        }
+        
+        h2.slide-title { 
+            font-size: 2.5rem; font-weight: 700; color: var(--primary); 
+            margin-bottom: 25px; width: 100%; text-align: left;
+        }
+        
+        h3 { font-size: 1.6rem; margin-bottom: 15px; font-weight: 600; color: #fff; }
+        p, li { font-size: 1.2rem; line-height: 1.5; color: var(--text-muted); }
+        
+        .chapter-tag {
+            font-family: 'JetBrains Mono', monospace; color: var(--secondary);
+            font-size: 1.1rem; text-transform: uppercase; letter-spacing: 2px;
+            margin-bottom: 5px; display: block; font-weight: bold; text-align: left; width: 100%;
+        }
+
+        .content-area { display: flex; flex-direction: column; flex-grow: 1; width: 100%; height: 100%; }
+
+        /* =========================================
+           PORTADA INSTITUCIONAL
+           ========================================= */
+        .header-institucional {
+            position: absolute; top: 30px; left: 0; width: 100%;
+            text-align: center; font-size: 1rem; text-transform: uppercase;
+            letter-spacing: 1.5px; color: #ccc; line-height: 1.5; z-index: 20;
+        }
+
+        .logo-container {
+            width: 120px; height: 120px; background: #ffffff; border-radius: 20px;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 0 50px rgba(41, 182, 246, 0.25);
+            padding: 10px; margin: 0 auto 15px auto;
+        }
+        .logo-container img { width: 100%; height: 100%; object-fit: contain; }
+
+        .date-footer {
+            position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
+            font-size: 1.1rem; color: var(--text-muted); font-weight: 300;
+            width: 100%; text-align: center; z-index: 20;
+        }
+
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; height: 100%; align-items: start; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; height: 100%; align-items: start; }
+
+        .card {
+            background: var(--bg-panel); border: 1px solid var(--border); border-radius: 16px;
+            padding: 30px; display: flex; flex-direction: column;
+        }
+
+        /* =========================================
+           MODAL LUPA PARA IMÁGENES
+           ========================================= */
+        .modal {
+            display: none; position: fixed; z-index: 10000; left: 0; top: 0;
+            width: 100%; height: 100%; background-color: rgba(0,0,0,0.85);
+            justify-content: center; align-items: center; cursor: zoom-out;
+            backdrop-filter: blur(5px);
+        }
+        .modal img { max-width: 90%; max-height: 90%; border-radius: 8px; box-shadow: 0 0 30px rgba(0,0,0,0.5); object-fit: contain; }
+        .zoomable { cursor: zoom-in; transition: transform 0.3s ease, box-shadow 0.3s ease; }
+        .zoomable:hover { transform: scale(1.02); box-shadow: 0 5px 25px rgba(41, 182, 246, 0.4); }
+
+        /* =========================================
+           ESTILOS ESPECÍFICOS: EL PROBLEMA
+           ========================================= */
+        .problem-container { display: flex; gap: 40px; justify-content: center; height: 100%; }
+        .problem-card {
+            background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border); border-radius: 24px;
+            padding: 40px; width: 48%; display: flex; flex-direction: column;
+            align-items: center; text-align: center;
+        }
+        .problem-card.global { border-top: 5px solid var(--primary); }
+        .problem-card.local { border-top: 5px solid var(--accent); }
+        .icon-circle {
+            width: 100px; height: 100px; background: rgba(255,255,255,0.08); border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; margin-bottom: 25px;
+        }
+        .big-number { font-size: 4.5rem; font-weight: 800; color: #fff; line-height: 1; margin: 15px 0; display: block; }
+        .consequence-box {
+            background: rgba(255, 82, 82, 0.15); border: 1px solid rgba(255, 82, 82, 0.4); color: #ff8a80;
+            padding: 20px; border-radius: 12px; text-align: center; margin-top: 20px; font-weight: 600; text-transform: uppercase; font-size: 1.3rem;
+        }
+
+        /* =========================================
+           ESTILOS ESPECÍFICOS: OBJETIVOS
+           ========================================= */
+        .obj-general-card {
+            background: linear-gradient(135deg, rgba(41, 182, 246, 0.1), rgba(41, 182, 246, 0.05)); 
+            border: 1px solid var(--primary); border-radius: 20px; padding: 40px; 
+            display: flex; flex-direction: column; justify-content: center; text-align: center; height: 100%;
+        }
+        .obj-specific-list { display: flex; flex-direction: column; justify-content: space-between; height: 100%; gap: 20px; }
+        .obj-item { background: var(--bg-panel); border: 1px solid var(--border); border-radius: 16px; padding: 25px; display: flex; align-items: flex-start; gap: 25px; }
+        .obj-icon { background: rgba(255, 202, 40, 0.1); min-width: 60px; height: 60px; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: var(--secondary); font-size: 1.5rem; }
+
+        /* =========================================
+           ESTILOS ESPECÍFICOS: GRÁFICOS CORREGIDOS
+           ========================================= */
+        .charts-container { display: flex; gap: 30px; height: 100%; width: 100%; padding-bottom: 20px;}
+        
+        .chart-box { 
+            background: var(--bg-panel); border: 1px solid var(--border); border-radius: 16px; 
+            /* Se aumentó padding-bottom a 100px para empujar CRITERIO y padding-left a 85px */
+            padding: 25px 25px 100px 85px; 
+            display: flex; flex-direction: column; flex: 1; position: relative;
+        }
+        
+        .chart-header { margin-bottom: 20px; min-height: 80px; }
+        .question-text { font-size: 1.15rem; color: #fff; margin-bottom: 10px; line-height: 1.4; font-style: italic; font-weight: bold; }
+        .key-insight { font-size: 1.1rem; color: var(--primary); font-weight: 600; display: inline-block; }
+        .key-insight strong { color: #fff; font-size: 1.2rem;}
+        .key-insight.critical { color: #ef5350; }
+
+        .chart-axes-container {
+            display: flex; align-items: flex-end; position: relative; 
+            flex-grow: 1; width: 100%; margin-top: 20px; 
+        }
+        
+        /* FRECUENCIA */
+        .y-axis-label {
+            position: absolute; 
+            left: -65px; 
+            top: 50%; 
+            transform: translate(-50%, -50%) rotate(-90deg);
+            white-space: nowrap; 
+            font-size: 0.95rem; color: var(--primary); font-weight: bold; letter-spacing: 2px; text-transform: uppercase;
+        }
+        
+        /* CRITERIO - Bajado de -55px a -75px */
+        .x-axis-label {
+            position: absolute; bottom: -75px; left: 50%; transform: translateX(-50%);
+            font-size: 0.95rem; color: var(--primary); font-weight: bold; letter-spacing: 2px; text-transform: uppercase;
+        }
+
+        .chart-grid {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            display: flex; flex-direction: column; justify-content: space-between;
+            z-index: 0; border-left: 2px solid #555; border-bottom: 2px solid #555;
+        }
+        /* Se remueven los inline heights para que flexbox los separe perfectamente sin solapar */
+        .grid-line { width: 100%; border-top: 1px dashed rgba(255,255,255,0.2); position: relative; height: 0; }
+        
+        /* NÚMEROS DEL EJE Y - Corregido el problema visual de la fuente (Glitched) */
+        .grid-line span { 
+            position: absolute; 
+            left: -40px; 
+            top: -12px; font-family: 'Inter', sans-serif; /* Usamos Inter para evitar bug visual de la monospace */
+            font-size: 1.1rem; color: #fff; font-weight: 600; 
+            width: 30px; text-align: right; display: block;
+        }
+
+        .v-chart { 
+            display: flex; align-items: flex-end; justify-content: space-around; 
+            height: 100%; width: 100%; position: relative; z-index: 1; padding: 0 10px;
+        }
+        .v-bar-group { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; width: 60px; position: relative;}
+        
+        .v-value { font-size: 1.1rem; color: #fff; font-weight: bold; margin-bottom: 5px; text-shadow: 0 2px 4px rgba(0,0,0,0.8); z-index: 2;}
+        
+        .v-bar { width: 100%; background: var(--primary); border-radius: 6px 6px 0 0; transition: height 1s cubic-bezier(0.175, 0.885, 0.32, 1.275); opacity: 0.95; box-shadow: 0 0 10px rgba(0,0,0,0.3); }
+        
+        .v-label { 
+            font-size: 0.85rem; color: #b0b8c4; text-align: center; 
+            position: absolute; top: 100%; margin-top: 10px; width: 90px; 
+            line-height: 1.2; font-weight: 600; 
+        }
+
+        .bg-green { background: linear-gradient(to top, #2e7d32, #66bb6a); }
+        .bg-yellow { background: linear-gradient(to top, #f57f17, #ffca28); }
+        .bg-orange { background: linear-gradient(to top, #e65100, #ff7043); }
+        .bg-red { background: linear-gradient(to top, #c62828, #ef5350); }
+
+        /* =========================================
+           ESTILOS ESPECÍFICOS: PROPUESTA Y LISTAS
+           ========================================= */
+        .prop-cover {
+            display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;
+            background: radial-gradient(circle at center, rgba(41, 182, 246, 0.15) 0%, transparent 70%);
+            border: 1px solid var(--primary); border-radius: 24px; padding: 60px; height: 100%; width: 100%;
+        }
+        .prop-cover h1 { font-size: 3.5rem; margin-bottom: 20px; line-height: 1.1; }
+        .prop-cover p { font-size: 1.5rem; max-width: 900px; color: #ddd; }
+
+        .feature-list { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 20px; }
+        .feature-list li { display: flex; align-items: flex-start; gap: 15px; background: rgba(255,255,255,0.03); padding: 20px; border-radius: 12px; }
+        .feature-list i { font-size: 1.8rem; color: var(--primary); margin-top: 2px; width: 35px; text-align: center; }
+        .feature-list strong { display: block; color: #fff; font-size: 1.3rem; margin-bottom: 5px; }
+        .feature-list span { color: var(--text-muted); font-size: 1.1rem; }
+
+        .feature-list-compact { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+        .feature-list-compact li { display: flex; align-items: flex-start; gap: 15px; background: rgba(255,255,255,0.03); padding: 15px 20px; border-radius: 12px; }
+        .feature-list-compact i { font-size: 1.5rem; color: var(--primary); margin-top: 2px; width: 30px; text-align: center; }
+        .feature-list-compact strong { display: block; color: #fff; font-size: 1.15rem; margin-bottom: 3px; }
+        .feature-list-compact span { color: var(--text-muted); font-size: 1rem; line-height: 1.3; }
+
+        .image-wrapper {
+            background: #fff; border-radius: 16px; padding: 10px; height: 100%; width: 100%;
+            display: flex; justify-content: center; align-items: center; border: 4px solid var(--border); overflow: hidden;
+        }
+        .image-wrapper img { width: 100%; height: 100%; object-fit: contain; border-radius: 8px; }
+
+        /* =========================================
+           TELÉFONOS (MÓDULOS)
+           ========================================= */
+        .modules-grid { display: flex; justify-content: center; gap: 40px; height: 100%; }
+        .module-item { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; width: 230px; }
+        
+        .iphone-frame {
+            background: #fff; border: 10px solid #1a1a1a; border-radius: 35px; width: 100%; aspect-ratio: 9/19.5; position: relative; overflow: hidden; box-shadow: 0 15px 40px rgba(0,0,0,0.6);
+        }
+        .iphone-notch { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 45%; height: 25px; background: #1a1a1a; border-radius: 0 0 15px 15px; z-index: 10; }
+        .iphone-frame img { width: 100%; height: 100%; object-fit: cover; }
+        .module-label { text-align: center; margin-top: 20px; font-size: 1.1rem; color: #fff; font-weight: bold; }
+
+        .progress-line { position: fixed; bottom: 0; left: 0; height: 5px; background: var(--primary); width: 0%; transition: width 0.3s; z-index: 100; }
+    </style>
+</head>
+<body>
+
+    <div class="background-fx"></div>
+    <div id="cursor"></div>
+    <div class="progress-line" id="progress"></div>
+
+    <div class="slide-container">
+
+        <!-- ================= SLIDE 1: PORTADA PRINCIPAL ================= -->
+        <div class="slide active slide-center">
+            
+            <div class="header-institucional">
+                <p>República Bolivariana de Venezuela<br>Instituto Universitario de Tecnología "Antonio José de Sucre"<br>Extensión Mérida</p>
+            </div>
+            
+            <div class="cover-content" style="margin-top: 40px; width: 100%; max-width: 950px;">
+                <div class="logo-container">
+                    <img src="https://images.seeklogo.com/logo-png/0/1/antonio-jose-de-sucre-logo-png_seeklogo-9393.png" alt="Logo IUTAJS" onerror="this.src='https://via.placeholder.com/150?text=IUTAJS'">
+                </div>
+                
+                <span class="chapter-tag" style="text-align: center; margin-bottom: 5px;">TRABAJO ESPECIAL DE GRADO</span>
+                
+                <h1 style="font-size: 2.2rem; margin: 10px 0;">APLICACIÓN MÓVIL ORIENTADA AL APRENDIZAJE DE LA LÓGICA DE PROGRAMACIÓN MEDIANTE GAMIFICACIÓN</h1>
+                
+                <p style="color: #fff; font-size: 1.2rem; margin-top: 5px;">Caso de Estudio: Estudiantes de Informática del IUTAJS - Extensión Mérida</p>
+                
+                <div style="margin-top: 25px; display: flex; justify-content: center; gap: 80px;">
+                    <div style="text-align: left;"><span class="chapter-tag">AUTOR</span><p style="color: #fff; font-weight: 600; font-size: 1.3rem;">Br. Claudio Dávila</p></div>
+                    <div style="text-align: left;"><span class="chapter-tag">TUTOR</span><p style="color: #fff; font-weight: 600; font-size: 1.3rem;">Ing. Luis Ordoñez</p></div>
+                </div>
+            </div>
+
+            <div class="date-footer">
+                Mérida, Febrero de 2026
+            </div>
+            
+        </div>
+
+        <!-- ================= SLIDE 2: PLANTEAMIENTO DEL PROBLEMA ================= -->
+        <div class="slide">
+            <span class="chapter-tag">CAPÍTULO I</span>
+            <h2 class="slide-title">El Problema</h2>
+            <div class="content-area">
+                <div class="problem-container">
+                    <div class="problem-card global">
+                        <div class="icon-circle" style="color: var(--primary);"><i class="fa-solid fa-earth-americas fa-4x"></i></div>
+                        <h3 style="color: var(--primary); font-size: 1.8rem;">Contexto Global</h3>
+                        <p style="font-size: 1.2rem; color: #fff;">Cursos Iniciales de Programación</p>
+                        <span class="big-number" style="color: var(--primary);">67.7%</span>
+                        <span style="font-size: 1.2rem; color: #aaa;">Tasa de Aprobación Promedio</span>
+                        <p style="font-size: 1rem; font-style: italic; margin-top: 10px;">(Watson y Li, 2014)</p>
+                    </div>
+                    <div class="problem-card local">
+                        <div class="icon-circle" style="color: var(--accent);"><i class="fa-solid fa-graduation-cap fa-4x"></i></div>
+                        <h3 style="color: var(--accent); font-size: 1.8rem;">Contexto Local (IUTAJS)</h3>
+                        <p style="font-size: 1.2rem; color: #fff;">Estudiantes de Informática</p>
+                        <ul style="text-align: left; margin-top: 25px; font-size: 1.15rem; padding-left: 20px; width: 90%;">
+                            <li style="margin-bottom: 15px; color: #e0e0e0;">Deficiencias severas en <strong>abstracción algorítmica</strong>.</li>
+                            <li style="margin-bottom: 15px; color: #e0e0e0;">Alta dificultad en uso de <strong>bucles y ciclos</strong>.</li>
+                            <li style="color: #e0e0e0;">Baja tolerancia ante <strong>errores de sintaxis</strong>.</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="consequence-box"><i class="fa-solid fa-triangle-exclamation"></i> Consecuencia Directa: <strong>Deserción, Frustración y Desmotivación Estudiantil</strong></div>
+            </div>
+        </div>
+
+        <!-- ================= SLIDE 3: OBJETIVOS ================= -->
+        <div class="slide">
+            <span class="chapter-tag">CAPÍTULO I</span>
+            <h2 class="slide-title">Objetivos de la Investigación</h2>
+            <div class="content-area">
+                <div class="grid-2">
+                    <div class="obj-general-card">
+                        <i class="fa-solid fa-bullseye fa-5x" style="color: var(--primary); margin-bottom: 30px;"></i>
+                        <h3 style="color: var(--primary); font-size: 2.2rem;">Objetivo General</h3>
+                        <p style="font-size: 1.3rem; color: #fff;">Proponer una aplicación móvil orientada al aprendizaje de la lógica de programación mediante la gamificación para los estudiantes de la carrera informática del Instituto Universitario de Tecnología “Antonio José de Sucre” extensión Mérida.</p>
+                    </div>
+                    <div class="obj-specific-list">
+                        <div class="obj-item">
+                            <div class="obj-icon"><i class="fa-solid fa-magnifying-glass"></i></div>
+                            <div>
+                                <strong style="color: #fff; font-size: 1.3rem; display:block; margin-bottom:5px;">Determinar</strong>
+                                <span>Las causas y dificultades para aprender lógica de programación en el IUTAJS.</span>
+                            </div>
+                        </div>
+                        <div class="obj-item">
+                            <div class="obj-icon"><i class="fa-solid fa-list-check"></i></div>
+                            <div>
+                                <strong style="color: #fff; font-size: 1.3rem; display:block; margin-bottom:5px;">Identificar</strong>
+                                <span>Los requerimientos funcionales y no funcionales del prototipo.</span>
+                            </div>
+                        </div>
+                        <div class="obj-item">
+                            <div class="obj-icon"><i class="fa-solid fa-mobile-screen-button"></i></div>
+                            <div>
+                                <strong style="color: #fff; font-size: 1.3rem; display:block; margin-bottom:5px;">Proponer</strong>
+                                <span>El diseño, codificación y depuración de la aplicación móvil educativa.</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= SLIDE 4: CUADRO DE VARIABLES ================= -->
+        <div class="slide">
+            <span class="chapter-tag">CAPÍTULO II</span>
+            <h2 class="slide-title">Operacionalización de Variables</h2>
+            <div class="content-area">
+                <div class="image-wrapper" style="border: none; background: rgba(255,255,255,0.05); padding: 10px;">
+                    <img src="cuadro de variables.png" class="zoomable" onclick="openModal(this.src)" alt="Cuadro de Variables" onerror="this.src='https://via.placeholder.com/1200x600?text=Falta+Imagen:+cuadro+de+variables.png'"> 
+                </div>
+                <p style="text-align: center; font-size: 0.9rem; margin-top: 10px; color: var(--primary);"><i class="fa-solid fa-hand-pointer"></i> Haz clic en la imagen para ampliarla</p>
+            </div>
+        </div>
+
+        <!-- ================= SLIDE 5: GRÁFICOS RESULTADOS 1 ================= -->
+        <div class="slide">
+            <span class="chapter-tag">CAPÍTULO IV: ANÁLISIS CUANTITATIVO</span>
+            <h2 class="slide-title">Dificultades Cognitivas (Conceptos Base)</h2>
+            <div class="content-area">
+                <div class="charts-container">
+                    
+                    <div class="chart-box">
+                        <div class="chart-header">
+                            <p class="question-text">"¿Qué tan difícil resulta comprender: Variables y Tipos de Datos?"</p>
+                            <span class="key-insight">El <strong>50%</strong> lo considera de dificultad Media.</span>
+                        </div>
+                        <div class="chart-axes-container">
+                            <div class="y-axis-label">Frecuencia</div>
+                            <div class="x-axis-label">Criterio</div>
+                            
+                            <div class="chart-grid">
+                                <div class="grid-line"><span>6</span></div>
+                                <div class="grid-line"><span>4</span></div>
+                                <div class="grid-line"><span>2</span></div>
+                                <div class="grid-line" style="border-top: 2px solid #555;"><span>0</span></div>
+                            </div>
+
+                            <div class="v-chart">
+                                <div class="v-bar-group"><div class="v-value">8%</div><div class="v-bar bg-green" data-height="16.6%"></div><div class="v-label">Muy<br>Fácil</div></div>
+                                <div class="v-bar-group"><div class="v-value">33%</div><div class="v-bar bg-green" data-height="66.6%"></div><div class="v-label">Fácil</div></div>
+                                <div class="v-bar-group"><div class="v-value">50%</div><div class="v-bar bg-yellow" data-height="100%"></div><div class="v-label">Medio</div></div>
+                                <div class="v-bar-group"><div class="v-value">8%</div><div class="v-bar bg-red" data-height="16.6%"></div><div class="v-label">Difícil</div></div>
+                                <div class="v-bar-group"><div class="v-value">0%</div><div class="v-bar bg-red" data-height="0%"></div><div class="v-label">Muy<br>Difícil</div></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="chart-box">
+                        <div class="chart-header">
+                            <p class="question-text">"¿Qué tan difícil resulta comprender: Condicionales (if/else)?"</p>
+                            <span class="key-insight">Muestra dividida: Primer <strong>punto de quiebre</strong>.</span>
+                        </div>
+                        <div class="chart-axes-container">
+                            <div class="y-axis-label">Frecuencia</div>
+                            <div class="x-axis-label">Criterio</div>
+                            
+                            <div class="chart-grid">
+                                <div class="grid-line"><span>6</span></div>
+                                <div class="grid-line"><span>4</span></div>
+                                <div class="grid-line"><span>2</span></div>
+                                <div class="grid-line" style="border-top: 2px solid #555;"><span>0</span></div>
+                            </div>
+
+                            <div class="v-chart">
+                                <div class="v-bar-group"><div class="v-value">17%</div><div class="v-bar bg-green" data-height="33.3%"></div><div class="v-label">Muy<br>Fácil</div></div>
+                                <div class="v-bar-group"><div class="v-value">33%</div><div class="v-bar bg-green" data-height="66.6%"></div><div class="v-label">Fácil</div></div>
+                                <div class="v-bar-group"><div class="v-value">25%</div><div class="v-bar bg-yellow" data-height="50%"></div><div class="v-label">Medio</div></div>
+                                <div class="v-bar-group"><div class="v-value">17%</div><div class="v-bar bg-orange" data-height="33.3%"></div><div class="v-label">Difícil</div></div>
+                                <div class="v-bar-group"><div class="v-value">8%</div><div class="v-bar bg-red" data-height="16.6%"></div><div class="v-label">Muy<br>Difícil</div></div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= SLIDE 6: GRÁFICOS RESULTADOS 2 ================= -->
+        <div class="slide">
+            <span class="chapter-tag">CAPÍTULO IV: ANÁLISIS CUANTITATIVO</span>
+            <h2 class="slide-title">Bucles y Sintaxis</h2>
+            <div class="content-area">
+                <div class="charts-container">
+                    
+                    <div class="chart-box">
+                        <div class="chart-header">
+                            <p class="question-text">"¿Qué tan difícil resulta comprender: Bucles o ciclos (for, while)?"</p>
+                            <span class="key-insight critical"><i class="fa-solid fa-triangle-exclamation"></i> El <strong>100%</strong> manifiesta dificultad media o alta.</span>
+                        </div>
+                        <div class="chart-axes-container">
+                            <div class="y-axis-label">Frecuencia</div>
+                            <div class="x-axis-label">Criterio</div>
+                            
+                            <div class="chart-grid">
+                                <div class="grid-line"><span>6</span></div>
+                                <div class="grid-line"><span>4</span></div>
+                                <div class="grid-line"><span>2</span></div>
+                                <div class="grid-line" style="border-top: 2px solid #555;"><span>0</span></div>
+                            </div>
+
+                            <div class="v-chart">
+                                <div class="v-bar-group"><div class="v-value">0%</div><div class="v-bar bg-green" data-height="0%"></div><div class="v-label">Muy<br>Fácil</div></div>
+                                <div class="v-bar-group"><div class="v-value">0%</div><div class="v-bar bg-green" data-height="0%"></div><div class="v-label">Fácil</div></div>
+                                <div class="v-bar-group"><div class="v-value">50%</div><div class="v-bar bg-yellow" data-height="100%"></div><div class="v-label">Medio</div></div>
+                                <div class="v-bar-group"><div class="v-value">33%</div><div class="v-bar bg-orange" data-height="66.6%"></div><div class="v-label">Difícil</div></div>
+                                <div class="v-bar-group"><div class="v-value">17%</div><div class="v-bar bg-red" data-height="33.3%"></div><div class="v-label">Muy<br>Difícil</div></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="chart-box">
+                        <div class="chart-header">
+                            <p class="question-text">"Cometo errores de sintaxis a menudo aunque entienda la lógica"</p>
+                            <span class="key-insight">El <strong>58%</strong> admite cometer errores frecuentes.</span>
+                        </div>
+                        <div class="chart-axes-container">
+                            <div class="y-axis-label">Frecuencia</div>
+                            <div class="x-axis-label">Criterio</div>
+                            
+                            <div class="chart-grid">
+                                <div class="grid-line"><span>6</span></div>
+                                <div class="grid-line"><span>4</span></div>
+                                <div class="grid-line"><span>2</span></div>
+                                <div class="grid-line" style="border-top: 2px solid #555;"><span>0</span></div>
+                            </div>
+
+                            <div class="v-chart">
+                                <div class="v-bar-group"><div class="v-value">8%</div><div class="v-bar bg-red" data-height="16.6%"></div><div class="v-label">Total.<br>Acuerdo</div></div>
+                                <div class="v-bar-group"><div class="v-value">50%</div><div class="v-bar bg-orange" data-height="100%"></div><div class="v-label">De<br>Acuerdo</div></div>
+                                <div class="v-bar-group"><div class="v-value">33%</div><div class="v-bar bg-yellow" data-height="66.6%"></div><div class="v-label">Neutral</div></div>
+                                <div class="v-bar-group"><div class="v-value">8%</div><div class="v-bar bg-green" data-height="16.6%"></div><div class="v-label">Desac-</div></div>
+                                <div class="v-bar-group"><div class="v-value">0%</div><div class="v-bar bg-green" data-height="0%"></div><div class="v-label">Total.<br>Desac.</div></div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= SLIDE 7: GRÁFICOS RESULTADOS 3 ================= -->
+        <div class="slide">
+            <span class="chapter-tag">CAPÍTULO IV: ANÁLISIS CUANTITATIVO</span>
+            <h2 class="slide-title">Abstracción y Frustración</h2>
+            <div class="content-area">
+                <div class="charts-container">
+                    
+                    <div class="chart-box">
+                        <div class="chart-header">
+                            <p class="question-text">"Encuentro desafiante dividir un problema en pasos lógicos"</p>
+                            <span class="key-insight critical"><i class="fa-solid fa-brain"></i> El <strong>67%</strong> tiene problemas severos de abstracción.</span>
+                        </div>
+                        <div class="chart-axes-container">
+                            <div class="y-axis-label">Frecuencia</div>
+                            <div class="x-axis-label">Criterio</div>
+                            
+                            <div class="chart-grid">
+                                <div class="grid-line"><span>6</span></div>
+                                <div class="grid-line"><span>4</span></div>
+                                <div class="grid-line"><span>2</span></div>
+                                <div class="grid-line" style="border-top: 2px solid #555;"><span>0</span></div>
+                            </div>
+
+                            <div class="v-chart">
+                                <div class="v-bar-group"><div class="v-value">42%</div><div class="v-bar bg-red" data-height="83.3%"></div><div class="v-label">Total.<br>Acuerdo</div></div>
+                                <div class="v-bar-group"><div class="v-value">25%</div><div class="v-bar bg-orange" data-height="50%"></div><div class="v-label">De<br>Acuerdo</div></div>
+                                <div class="v-bar-group"><div class="v-value">17%</div><div class="v-bar bg-yellow" data-height="33.3%"></div><div class="v-label">Neutral</div></div>
+                                <div class="v-bar-group"><div class="v-value">17%</div><div class="v-bar bg-green" data-height="33.3%"></div><div class="v-label">Desac-</div></div>
+                                <div class="v-bar-group"><div class="v-value">0%</div><div class="v-bar bg-green" data-height="0%"></div><div class="v-label">Total.<br>Desac.</div></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="chart-box">
+                        <div class="chart-header">
+                            <p class="question-text">"¿Con qué frecuencia sientes frustración al querer abandonar por un error?"</p>
+                            <span class="key-insight critical"><i class="fa-solid fa-heart-crack"></i> El <strong>50%</strong> se frustra frecuentemente.</span>
+                        </div>
+                        <div class="chart-axes-container">
+                            <div class="y-axis-label">Frecuencia</div>
+                            <div class="x-axis-label">Criterio</div>
+                            
+                            <div class="chart-grid">
+                                <div class="grid-line"><span>6</span></div>
+                                <div class="grid-line"><span>4</span></div>
+                                <div class="grid-line"><span>2</span></div>
+                                <div class="grid-line" style="border-top: 2px solid #555;"><span>0</span></div>
+                            </div>
+
+                            <div class="v-chart">
+                                <div class="v-bar-group"><div class="v-value">0%</div><div class="v-bar bg-red" data-height="0%"></div><div class="v-label">Siempre</div></div>
+                                <div class="v-bar-group"><div class="v-value">25%</div><div class="v-bar bg-orange" data-height="50%"></div><div class="v-label">Casi<br>Siempre</div></div>
+                                <div class="v-bar-group"><div class="v-value">25%</div><div class="v-bar bg-yellow" data-height="50%"></div><div class="v-label">A veces</div></div>
+                                <div class="v-bar-group"><div class="v-value">42%</div><div class="v-bar bg-green" data-height="83.3%"></div><div class="v-label">Rara<br>Vez</div></div>
+                                <div class="v-bar-group"><div class="v-value">8%</div><div class="v-bar bg-green" data-height="16.6%"></div><div class="v-label">Nunca</div></div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= SLIDE 8: ENTREVISTA EXPERTO ================= -->
+        <div class="slide">
+            <span class="chapter-tag">CAPÍTULO IV: ANÁLISIS CUALITATIVO</span>
+            <h2 class="slide-title">Resultados de Entrevista al Experto</h2>
+            <div class="content-area">
+                <div class="grid-2">
+                    <div class="card" style="border-left: 5px solid var(--primary);">
+                        <h3><i class="fa-solid fa-brain" style="color: var(--primary); margin-right: 10px;"></i> Dificultad y Solución</h3>
+                        <p>La barrera principal es el <strong>alto nivel de abstracción</strong>. Se recomienda el uso de dispositivos móviles no para escribir código pesado, sino para <strong>ejercicios lógicos de refuerzo</strong> y material audiovisual.</p>
+                    </div>
+                    <div class="card" style="border-left: 5px solid var(--secondary);">
+                        <h3><i class="fa-solid fa-gamepad" style="color: var(--secondary); margin-right: 10px;"></i> Feedback y Gamificación</h3>
+                        <p>No penalizar por tiempo. Proveer pistas explicativas ante errores. Implementar un <strong>desbloqueo progresivo</strong> y recompensar con estrellas y "Datos Curiosos" (Trivia Tech) para enriquecer cognitivamente.</p>
+                    </div>
+                    <div class="card" style="border-left: 5px solid var(--accent);">
+                        <h3><i class="fa-solid fa-gears" style="color: var(--accent); margin-right: 10px;"></i> Requerimientos No Funcionales</h3>
+                        <p>Feedback inmediato (<strong>latencia cero</strong>) para mantener la inmersión. <strong>Arquitectura modular</strong> para escalar niveles a futuro, y protocolos robustos de seguridad y autenticación.</p>
+                    </div>
+                    <div class="card" style="border-left: 5px solid var(--success);">
+                        <h3><i class="fa-solid fa-mobile-button" style="color: var(--success); margin-right: 10px;"></i> Diseño (UX/UI)</h3>
+                        <p>Crear una experiencia de usuario simple e intuitiva. Fundamental incluir <strong>atajos de teclado (shortcuts)</strong> para símbolos como <code>{ } ; ( )</code> para evitar frustración por sintaxis en móviles.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= SLIDE 9: PORTADA PROPUESTA ================= -->
+        <div class="slide slide-center">
+            <div class="prop-cover">
+                <img src="logo.png" alt="Logotipo de la Aplicación" style="width: 160px; height: 160px; object-fit: contain; margin-bottom: 25px; border-radius: 30px;" onerror="this.src='https://via.placeholder.com/160?text=LOGO'">
+                
+                <span class="chapter-tag" style="text-align: center; color: var(--text-muted);">FASE III: DISEÑO Y DESARROLLO</span>
+                <h1 style="font-size: 3.2rem; color: #fff;">LA PROPUESTA</h1>
+                <p><strong>Aplicación Móvil para el Aprendizaje de la Lógica de Programación</strong></p>
+                <br>
+                <p style="font-size: 1.2rem; color: var(--text-muted); max-width: 800px; margin: 0 auto;">Una solución interactiva basada en <strong>Flutter y Firebase</strong>, diseñada para transformar la frustración en motivación mediante Gamificación y Mobile Learning.</p>
+            </div>
+        </div>
+
+        <!-- ================= SLIDE 10: OBJETIVOS Y ALCANCE PROPUESTA ================= -->
+        <div class="slide">
+            <span class="chapter-tag">LA PROPUESTA</span>
+            <h2 class="slide-title">Objetivos y Alcance</h2>
+            <div class="content-area">
+                <div class="grid-2">
+                    <div>
+                        <div class="card" style="background: linear-gradient(135deg, rgba(41, 182, 246, 0.1), transparent); border-color: var(--primary); margin-bottom: 15px; padding: 25px;">
+                            <h3 style="color: var(--primary); font-size: 1.4rem;">Objetivo General</h3>
+                            <p style="color: #fff; font-size: 1.1rem;">Desarrollar una aplicación móvil multiplataforma con gamificación para el aprendizaje de la lógica de programación en estudiantes de informática del IUTAJS.</p>
+                        </div>
+                        <ul class="feature-list-compact">
+                            <li><i class="fa-solid fa-pen-ruler"></i> <div><strong>Diseñar</strong><span>Arquitectura de software MVVM para la app.</span></div></li>
+                            <li><i class="fa-solid fa-database"></i> <div><strong>Estructurar</strong><span>Base de datos NoSQL en Cloud Firestore.</span></div></li>
+                            <li><i class="fa-solid fa-code"></i> <div><strong>Codificar</strong><span>Módulos de gamificación en Flutter y Dart.</span></div></li>
+                            <li><i class="fa-solid fa-vial"></i> <div><strong>Validar</strong><span>Mediante Pruebas de caja negra.</span></div></li>
+                        </ul>
+                    </div>
+                    
+                    <div class="card" style="height: 100%;">
+                        <h3 style="color: var(--secondary); margin-bottom: 25px;"><i class="fa-solid fa-bullseye"></i> Alcance Tecnológico</h3>
+                        <ul class="feature-list">
+                            <li>
+                                <div style="background: rgba(255,255,255,0.1); border-radius: 50%; width: 50px; height: 50px; display: flex; justify-content: center; align-items: center;"><i class="fa-solid fa-users" style="color: #fff; margin:0;"></i></div>
+                                <div><strong>Público Objetivo</strong><span>Estudiantes de Informática del IUTAJS.</span></div>
+                            </li>
+                            <li>
+                                <div style="background: rgba(255,255,255,0.1); border-radius: 50%; width: 50px; height: 50px; display: flex; justify-content: center; align-items: center;"><i class="fa-brands fa-apple" style="color: #fff; margin:0;"></i></div>
+                                <div><strong>Multiplataforma</strong><span>Compatible con Android e iOS (código único).</span></div>
+                            </li>
+                            <li>
+                                <div style="background: rgba(255,255,255,0.1); border-radius: 50%; width: 50px; height: 50px; display: flex; justify-content: center; align-items: center;"><i class="fa-solid fa-layer-group" style="color: #fff; margin:0;"></i></div>
+                                <div><strong>Escalabilidad</strong><span>Adaptable a cualquier usuario principiante en lógica.</span></div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= SLIDE 11: JUSTIFICACIÓN Y FACTIBILIDAD ================= -->
+        <div class="slide">
+            <span class="chapter-tag">LA PROPUESTA</span>
+            <h2 class="slide-title">Justificación y Factibilidad</h2>
+            <div class="content-area">
+                <div class="grid-3">
+                    <div class="card">
+                        <i class="fa-solid fa-book-open fa-3x" style="color: var(--primary); margin-bottom: 20px;"></i>
+                        <h3 style="color: var(--primary);">Justificación Pedagógica</h3>
+                        <p>Mitiga barreras cognitivas. Permite <strong>abstraer la complejidad sintáctica</strong> para centrarse en la resolución algorítmica de problemas mediante retos interactivos.</p>
+                    </div>
+                    
+                    <div class="card">
+                        <i class="fa-solid fa-microchip fa-3x" style="color: var(--secondary); margin-bottom: 20px;"></i>
+                        <h3 style="color: var(--secondary);">Justificación Tecnológica</h3>
+                        <p>El uso de <strong>Flutter</strong> moderniza los recursos institucionales con portabilidad. La <strong>gamificación</strong> reduce la frustración y aumenta la retención estudiantil.</p>
+                    </div>
+
+                    <div class="card" style="border-color: var(--success); background: linear-gradient(180deg, rgba(102, 187, 106, 0.1), transparent);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <h3 style="color: var(--success); margin: 0;">Factibilidad<br>Económica</h3>
+                            <span style="font-size: 3rem; font-weight: 800; color: #fff;">$0</span>
+                        </div>
+                        <ul style="list-style: none; padding: 0;">
+                            <li style="margin-bottom: 15px;"><i class="fa-solid fa-check" style="color: var(--success); margin-right: 10px;"></i><strong>Herramientas Open Source:</strong> Flutter, Dart, VS Code.</li>
+                            <li><i class="fa-solid fa-check" style="color: var(--success); margin-right: 10px;"></i><strong>Infraestructura Backend:</strong> Firebase "Spark Plan" gratuito (50K lecturas diarias).</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= SLIDE 12: ARQUITECTURA MVVM ================= -->
+        <div class="slide">
+            <span class="chapter-tag">DESARROLLO DE LA PROPUESTA</span>
+            <h2 class="slide-title">Arquitectura del Sistema (MVVM)</h2>
+            <div class="content-area">
+                <div class="grid-2" style="grid-template-columns: 1.3fr 1fr;">
+                    <div class="image-wrapper" style="background: rgba(255,255,255,0.02); border: 2px dashed var(--primary); padding: 5px;">
+                        <img src="modelo.png" class="zoomable" onclick="openModal(this.src)" alt="Arquitectura MVVM" onerror="this.src='https://via.placeholder.com/600x400?text=Falta+Imagen:+modelo.png'">
+                    </div>
+                    <div style="display: flex; flex-direction: column; justify-content: center; gap: 15px;">
+                        <div class="card" style="padding: 15px 20px; border-left: 4px solid #90caf9;">
+                            <h3 style="font-size: 1.2rem; margin-bottom: 5px;">1. VISTA (View)</h3>
+                            <p style="font-size: 1rem;">Capa visual (ej. <code>LoginScreen.dart</code>). Dibuja widgets y notifica al ViewModel.</p>
+                        </div>
+                        <div class="card" style="padding: 15px 20px; border-left: 4px solid #a5d6a7;">
+                            <h3 style="font-size: 1.2rem; margin-bottom: 5px;">2. VIEWMODEL</h3>
+                            <p style="font-size: 1rem;">Gestor de estado (ej. <code>LoginViewModel.dart</code>). Procesa la lógica y solicita datos.</p>
+                        </div>
+                        <div class="card" style="padding: 15px 20px; border-left: 4px solid #ce93d8;">
+                            <h3 style="font-size: 1.2rem; margin-bottom: 5px;">3. REPOSITORIO</h3>
+                            <p style="font-size: 1rem;">Abstracción (ej. <code>AuthRepository.dart</code>). Se comunica con Firebase y parsea datos.</p>
+                        </div>
+                        <div class="card" style="padding: 15px 20px; border-left: 4px solid #ffe082;">
+                            <h3 style="font-size: 1.2rem; margin-bottom: 5px;">4. MODELO & FIREBASE</h3>
+                            <p style="font-size: 1rem;"><strong>Modelo:</strong> Clases de Dart.<br><strong>Firebase:</strong> Servidor NoSQL.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= SLIDE 13: BASE DE DATOS (USERS) ================= -->
+        <div class="slide">
+            <span class="chapter-tag">DISEÑO DE BASE DE DATOS (NoSQL)</span>
+            <h2 class="slide-title">Colección: Users</h2>
+            <div class="content-area">
+                <div class="grid-2" style="grid-template-columns: 1fr 1.3fr;">
+                    <div style="display: flex; flex-direction: column; justify-content: center; gap: 20px;">
+                        <p style="font-size: 1.3rem; color: #fff;">Gestiona la información del usuario y su avance en la aplicación.</p>
+                        <ul class="feature-list-compact">
+                            <li>
+                                <i class="fa-solid fa-id-card"></i>
+                                <div><strong>Datos Personales</strong><span><code>document_id</code> (UID Auth), nombre, username, email.</span></div>
+                            </li>
+                            <li>
+                                <i class="fa-solid fa-chart-pie"></i>
+                                <div><strong>Stats (Estadísticas)</strong><span>Mapa con: precisión, nivel actual, racha, historial, vidas y XP.</span></div>
+                            </li>
+                            <li>
+                                <i class="fa-solid fa-bars-progress"></i>
+                                <div><strong>Level Progress</strong><span>Estado de niveles completados (estrellas, puntaje, fecha).</span></div>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="image-wrapper" style="background: #fff; border-color: var(--secondary);">
+                        <img src="coleccion usuarios.png" class="zoomable" onclick="openModal(this.src)" alt="Colección Users" onerror="this.src='https://via.placeholder.com/600x400?text=Falta+Imagen:+coleccion+usuarios.png'">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= SLIDE 14: BASE DE DATOS (LEVELS) ================= -->
+        <div class="slide">
+            <span class="chapter-tag">DISEÑO DE BASE DE DATOS (NoSQL)</span>
+            <h2 class="slide-title">Colección: Levels</h2>
+            <div class="content-area">
+                <div class="grid-2" style="grid-template-columns: 1fr 1.3fr;">
+                    <div style="display: flex; flex-direction: column; justify-content: center; gap: 20px;">
+                        <p style="font-size: 1.3rem; color: #fff;">Almacena toda la información relacionada a los desafíos y currícula.</p>
+                        <ul class="feature-list-compact">
+                            <li>
+                                <i class="fa-solid fa-layer-group"></i>
+                                <div><strong>Metadatos del Nivel</strong><span><code>id</code>, título, subtítulo, secuencia, icono, color y descripción.</span></div>
+                            </li>
+                            <li>
+                                <i class="fa-solid fa-lightbulb"></i>
+                                <div><strong>Analogía</strong><span>Aprendizaje por asociación con la vida real.</span></div>
+                            </li>
+                            <li>
+                                <i class="fa-solid fa-code"></i>
+                                <div><strong>Challenges (Array)</strong><span>Lista de ejercicios: pregunta, código, opciones, repuesta y feedback.</span></div>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="image-wrapper" style="background: #fff; border-color: var(--primary);">
+                        <img src="coleccion niveles.png" class="zoomable" onclick="openModal(this.src)" alt="Colección Levels" onerror="this.src='https://via.placeholder.com/600x400?text=Falta+Imagen:+coleccion+niveles.png'">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= SLIDE 15: COMPONENTES CLAVE DE LA APP ================= -->
+        <div class="slide">
+            <span class="chapter-tag">DESARROLLO DE LA PROPUESTA</span>
+            <h2 class="slide-title">Componentes y Módulos Clave</h2>
+            <div class="content-area">
+                <div class="grid-3">
+                    <div class="card" style="text-align: center; border-color: var(--primary);">
+                        <i class="fa-solid fa-laptop-code fa-4x" style="color: var(--primary); margin: 20px 0;"></i>
+                        <h3 style="color: #fff;">Módulo de Aprendizaje</h3>
+                        <p style="font-size: 1.1rem; flex-grow: 1;">Enfoque de <strong>Microlearning</strong> con desafíos lógicos. Evalúa la estructura y comprensión algorítmica por encima de la velocidad.</p>
+                    </div>
+                    <div class="card" style="text-align: center; border-color: var(--secondary);">
+                        <i class="fa-solid fa-trophy fa-4x" style="color: var(--secondary); margin: 20px 0;"></i>
+                        <h3 style="color: #fff;">Sistema de Gamificación</h3>
+                        <p style="font-size: 1.1rem; flex-grow: 1;">Otorga XP y estrellas. Incluye un <strong>Ranking Global</strong> del IUTAJS y desbloqueo progresivo para transformar el error en motivación.</p>
+                    </div>
+                    <div class="card" style="text-align: center; border-color: var(--accent);">
+                        <i class="fa-solid fa-robot fa-4x" style="color: var(--accent); margin: 20px 0;"></i>
+                        <h3 style="color: #fff;">Generación Adaptativa (IA)</h3>
+                        <p style="font-size: 1.1rem; flex-grow: 1;">Crea niveles personalizados según los gustos del usuario (Ej: Videojuegos, Deportes), conectando la lógica con intereses reales.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= SLIDE 16: INTERFACES (MOCKUPS) ================= -->
+        <div class="slide">
+            <span class="chapter-tag">DESARROLLO DE LA PROPUESTA</span>
+            <h2 class="slide-title">Interfaces de Usuario (UI)</h2>
+            <div class="content-area">
+                <div class="modules-grid">
+                    <div class="module-item">
+                        <div class="iphone-frame">
+                            <div class="iphone-notch"></div>
+                            <img src="inicio de sesion.PNG" alt="Inicio de Sesión" onerror="this.src='https://via.placeholder.com/300x600?text=Falta+Imagen'">
+                        </div>
+                        <p class="module-label">Login / Auth</p>
+                    </div>
+                    <div class="module-item">
+                        <div class="iphone-frame">
+                            <div class="iphone-notch"></div>
+                            <img src="niveles.PNG" alt="Niveles" onerror="this.src='https://via.placeholder.com/300x600?text=Falta+Imagen'">
+                        </div>
+                        <p class="module-label">Mapa de Niveles</p>
+                    </div>
+                    <div class="module-item">
+                        <div class="iphone-frame">
+                            <div class="iphone-notch"></div>
+                            <img src="perfil.PNG" alt="Perfil" onerror="this.src='https://via.placeholder.com/300x600?text=Falta+Imagen'">
+                        </div>
+                        <p class="module-label">Perfil y Stats</p>
+                    </div>
+                    <div class="module-item">
+                        <div class="iphone-frame">
+                            <div class="iphone-notch"></div>
+                            <img src="ranking.PNG" alt="Ranking" onerror="this.src='https://via.placeholder.com/300x600?text=Falta+Imagen'">
+                        </div>
+                        <p class="module-label">Ranking Global</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= SLIDE 17: CONCLUSIONES Y RECOMENDACIONES ================= -->
+        <div class="slide">
+            <h2 class="slide-title" style="color: #fff;">Conclusiones y Recomendaciones</h2>
+            <div class="content-area">
+                <div class="grid-2">
+                    <div class="card" style="border-top: 5px solid var(--primary);">
+                        <h3 style="color: var(--primary); margin-bottom: 25px;">Conclusiones</h3>
+                        <ul style="margin-left: 20px;">
+                            <li style="margin-bottom: 15px;">La brecha cognitiva (abstracción) y emocional (frustración sintáctica) es la causa principal de la deserción.</li>
+                            <li style="margin-bottom: 15px;">La arquitectura <strong>MVVM con Flutter y Firebase</strong> comprobó ser altamente eficiente, escalable y de latencia cero.</li>
+                            <li>El enfoque del <strong>Microlearning Gamificado</strong> y el desbloqueo progresivo transforma la frustración en un impulso por superar el reto.</li>
+                        </ul>
+                    </div>
+                    <div class="card" style="border-top: 5px solid var(--secondary); height: 100%;">
+                        <h3 style="color: var(--secondary); margin-bottom: 25px;">Recomendaciones</h3>
+                        <ul style="margin-left: 20px;">
+                            <li style="margin-bottom: 15px;">Integrar analíticas de aprendizaje masivas (Big Data) en Firebase para predecir y corregir patrones de error.</li>
+                            <li style="margin-bottom: 15px;">Escalar los módulos hacia la <strong>Programación Orientada a Objetos (POO)</strong> y otros paradigmas.</li>
+                            <li>Implementar un seguimiento longitudinal del rendimiento estudiantil en el IUTAJS usando la herramienta a lo largo de varios semestres.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= SLIDE 18: DESPEDIDA FINAL ================= -->
+        <div class="slide slide-center" style="display: flex; flex-direction: column; justify-content: center;">
+            <div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center;">
+                <h1 style="font-size: 4rem; color: var(--primary); margin-bottom: 10px;">¡MUCHAS GRACIAS!</h1>
+                <p style="font-size: 1.8rem; color: #fff; margin-top: 10px;">¿Preguntas?</p>
+            </div>
+            <div class="date-footer" style="position: absolute; bottom: 30px; border: none; padding-bottom: 20px;">Febrero de 2026</div>
+        </div>
+
+    </div>
+
+    <!-- Contenedor del Modal (Lupa) -->
+    <div id="imageModal" class="modal" onclick="this.style.display='none'">
+        <img id="modalImg" src="">
+    </div>
+
+    <!-- =========================================
+         JAVASCRIPT LOGIC
+         ========================================= -->
+    <script>
+        const slides = document.querySelectorAll('.slide'); 
+        const progressBar = document.getElementById('progress'); 
+        let current = 0; 
+
+        function update() {
+            slides.forEach((s, i) => {
+                s.classList.remove('active');
+                
+                if (i === current) {
+                    s.classList.add('active'); 
+                    
+                    if (s.querySelector('.v-chart')) {
+                        setTimeout(() => animateResults(s), 100); 
+                    }
+                }
+            });
+            
+            progressBar.style.width = `${((current + 1) / slides.length) * 100}%`;
+        }
+
+        function animateResults(slideElement) {
+            const bars = slideElement.querySelectorAll('.v-bar');
+            bars.forEach(bar => {
+                bar.style.height = '0%'; 
+                setTimeout(() => {
+                    bar.style.height = bar.getAttribute('data-height'); 
+                }, 50);
+            });
+        }
+
+        function openModal(src) {
+            document.getElementById('modalImg').src = src;
+            document.getElementById('imageModal').style.display = 'flex';
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') {
+                if (current < slides.length - 1) { current++; update(); }
+            }
+            if (e.key === 'ArrowLeft') {
+                if (current > 0) { current--; update(); }
+            }
+            if (e.key === 'Escape') {
+                document.getElementById('imageModal').style.display = 'none';
+            }
+        });
+
+        const cursor = document.getElementById('cursor');
+        document.addEventListener('mousemove', e => {
+            cursor.style.left = e.clientX + 'px';
+            cursor.style.top = e.clientY + 'px';
+        });
+        
+        document.addEventListener('mousedown', () => cursor.style.transform = 'scale(0.8)');
+        document.addEventListener('mouseup', () => cursor.style.transform = 'scale(1)');
+
+        update();
+    </script>
+</body>
+</html>

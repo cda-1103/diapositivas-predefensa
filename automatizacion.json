@@ -1,0 +1,128 @@
+{
+    "name": "Libro de Licores Inteligente con Telegram",
+    "flow": [
+        {
+            "id": 1,
+            "module": "google-drive:watchFiles",
+            "version": 1,
+            "parameters": {
+                "filter": "files"
+            },
+            "mapper": {},
+            "metadata": {
+                "designer": { "x": 0, "y": 0, "name": "1. Vigilar Carpeta" }
+            }
+        },
+        {
+            "id": 2,
+            "module": "google-drive:getFile",
+            "version": 1,
+            "parameters": {},
+            "mapper": {
+                "fileId": "{{1.fileId}}"
+            },
+            "metadata": {
+                "designer": { "x": 250, "y": 0, "name": "2. Descargar Imagen" }
+            }
+        },
+        {
+            "id": 3,
+            "module": "google-gemini:generateContent",
+            "version": 1,
+            "parameters": {
+                "model": "gemini-1.5-flash"
+            },
+            "mapper": {
+                "messages": [
+                    {
+                        "role": "user",
+                        "content": "Analiza la factura de licores. Extrae los datos en formato JSON estrictamente. REGLAS: 1. TODO EN MAYÚSCULAS. 2. Extrae: Numero factura, Fecha, Proveedor. 3. Para cada ítem: Denominación (sin tipo de licor), Clase (RON, WHISKY, etc.), Grados, Cantidad, Capacidad (Lts). 4. Identifica procedencia NACIONAL o IMPORTADO.\n\nJSON Schema:\n{\n \"factura\": \"string\",\n \"fecha\": \"string\",\n \"proveedor\": \"string\",\n \"items\": [{ \"procedencia\": \"string\", \"denominacion\": \"string\", \"clase\": \"string\", \"grados\": number, \"cantidad\": number, \"capacidad\": number }]\n}"
+                    },
+                    {
+                        "role": "user",
+                        "content": "{{2.data}}"
+                    }
+                ]
+            },
+            "metadata": {
+                "designer": { "x": 500, "y": 0, "name": "3. IA Gemini" }
+            }
+        },
+        {
+            "id": 4,
+            "module": "json:ParseJSON",
+            "version": 1,
+            "parameters": {},
+            "mapper": {
+                "json": "{{3.text}}"
+            },
+            "metadata": {
+                "designer": { "x": 750, "y": 0, "name": "4. Convertir JSON" }
+            }
+        },
+        {
+            "id": 5,
+            "module": "telegram:sendMessage",
+            "version": 1,
+            "parameters": {
+                "parseMode": "Markdown"
+            },
+            "mapper": {
+                "text": "📊 *Nueva Factura Procesada*\n\n*Nro:* {{4.factura}}\n*Proveedor:* {{4.proveedor}}\n*Items:* {{length(4.items)}}"
+            },
+            "metadata": {
+                "designer": { "x": 1000, "y": -120, "name": "5. Notificación" }
+            }
+        },
+        {
+            "id": 6,
+            "module": "builtin:Iterator",
+            "version": 1,
+            "parameters": {},
+            "mapper": {
+                "array": "{{4.items}}"
+            },
+            "metadata": {
+                "designer": { "x": 1000, "y": 120, "name": "6. Iterar Productos" }
+            }
+        },
+        {
+            "id": 7,
+            "module": "google-sheets:addRow",
+            "version": 4,
+            "parameters": {},
+            "mapper": {
+                "factura": "{{4.factura}}",
+                "fecha": "{{4.fecha}}",
+                "proveedor": "{{4.proveedor}}",
+                "nacional": "{{if(6.value.procedencia = \"NACIONAL\"; \"X\"; \"\")}}",
+                "importado": "{{if(6.value.procedencia = \"IMPORTADO\"; \"X\"; \"\")}}",
+                "denominacion": "{{6.value.denominacion}}",
+                "clase": "{{6.value.clase}}",
+                "grados": "{{6.value.grados}}",
+                "cantidad": "{{6.value.cantidad}}",
+                "capacidad": "{{6.value.capacidad}}",
+                "total_litros": "{{6.value.cantidad * 6.value.capacidad}}"
+            },
+            "metadata": {
+                "designer": { "x": 1250, "y": 120, "name": "7. Llenar Libro" }
+            }
+        }
+    ],
+    "metadata": {
+        "version": 1,
+        "zone": "us2.make.com",
+        "notes": [
+            {
+                "moduleIds": [1],
+                "content": "<h1>Paso 1</h1><p>Conecta tu Google Drive y elige la carpeta donde subirás las fotos.</p>",
+                "metadata": { "color": "#9138FE" }
+            },
+            {
+                "moduleIds": [3],
+                "content": "<h1>IA</h1><p>Pega aquí tu API Key de Google AI Studio (Gemini).</p>",
+                "metadata": { "color": "#9138FE" }
+            }
+        ]
+    }
+}
